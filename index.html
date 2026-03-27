@@ -3,73 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <title>Jogo da Memória</title>
+
 <style>
 body {
     font-family: Arial;
     text-align: center;
-    background: #1e1e2f;
     color: white;
+    margin: 0;
 }
 
-h1 { margin-top: 10px; }
+/* TELAS */
+#login, #game, #ranking {
+    height: 100vh;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
 
-#game, #ranking { display: none; }
+/* FUNDO LOGIN */
+#login {
+    display: flex;
+    background: url('fundo-login.jpg') no-repeat center center;
+    background-size: cover;
+}
+
+/* FUNDO JOGO */
+#game {
+    background: url('fundo-jogo.jpg') no-repeat center center;
+    background-size: cover;
+}
+
+/* FUNDO RANKING */
+#ranking {
+    background: url('fundo-ranking.jpg') no-repeat center center;
+    background-size: cover;
+}
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(5, 80px);
-    gap: 10px;
-    justify-content: center;
+    grid-template-columns: repeat(5, 90px);
+    gap: 12px;
     margin-top: 20px;
 }
 
 .card {
-    width: 80px;
-    height: 80px;
-    background: #444;
+    width: 90px;
+    height: 90px;
+    background: #333;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    font-size: 24px;
-    border-radius: 10px;
+    font-size: 28px;
+    border-radius: 12px;
 }
 
 .card.flipped {
-    background: #fff;
-    color: #000;
-    cursor: default;
+    background: white;
+    color: black;
 }
 
 button {
     padding: 10px 20px;
-    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
 }
 
+input {
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+}
+
+.box {
+    background: rgba(0,0,0,0.6);
+    padding: 20px;
+    border-radius: 12px;
+}
 </style>
 </head>
+
 <body>
 
-<h1>🧠 Jogo da Memória</h1>
-
+<!-- LOGIN -->
 <div id="login">
-    <p>Digite seu nome ou apelido:</p>
-    <input type="text" id="playerName" placeholder="Seu nome">
-    <br><br>
-    <button onclick="startGame()">Iniciar Jogo</button>
+    <div class="box">
+        <h1>🧠 Jogo da Memória</h1>
+        <p>Digite seu nome ou apelido:</p>
+        <input type="text" id="playerName">
+        <br><br>
+        <button onclick="startGame()">Jogar</button>
+    </div>
 </div>
 
+<!-- JOGO -->
 <div id="game">
-    <p>Jogador: <span id="playerDisplay"></span></p>
-    <p>Tempo restante: <span id="time">180</span>s</p>
-    <div class="grid" id="grid"></div>
+    <div class="box">
+        <p>Jogador: <span id="playerDisplay"></span></p>
+        <p>Tempo: <span id="time">180</span>s</p>
+        <div class="grid" id="grid"></div>
+    </div>
 </div>
 
+<!-- RANKING -->
 <div id="ranking">
-    <h2>🏆 Ranking</h2>
-    <ol id="rankingList"></ol>
-    <button onclick="restart()">Jogar novamente</button>
+    <div class="box">
+        <h2>🏆 Ranking</h2>
+        <ol id="rankingList"></ol>
+        <button onclick="restart()">Jogar novamente</button>
+    </div>
 </div>
 
 <script>
@@ -83,21 +127,21 @@ let time = 180;
 let timer;
 let player = "";
 
+/* INICIAR */
 function startGame() {
     player = document.getElementById("playerName").value;
-    if (!player) {
-        alert("Digite seu nome!");
-        return;
-    }
+    if (!player) return alert("Digite seu nome!");
 
     document.getElementById("login").style.display = "none";
-    document.getElementById("game").style.display = "block";
+    document.getElementById("game").style.display = "flex";
+
     document.getElementById("playerDisplay").innerText = player;
 
     startTimer();
     createCards();
 }
 
+/* TIMER */
 function startTimer() {
     timer = setInterval(() => {
         time--;
@@ -110,6 +154,7 @@ function startTimer() {
     }, 1000);
 }
 
+/* CARTAS */
 function createCards() {
     cards = [...symbols, ...symbols];
     cards.sort(() => 0.5 - Math.random());
@@ -123,11 +168,11 @@ function createCards() {
         card.dataset.symbol = symbol;
 
         card.onclick = () => flipCard(card);
-
         grid.appendChild(card);
     });
 }
 
+/* VIRAR CARTA */
 function flipCard(card) {
     if (lock || card.classList.contains("flipped")) return;
 
@@ -160,18 +205,18 @@ function flipCard(card) {
     }
 }
 
+/* RESET */
 function resetTurn() {
     firstCard = null;
     secondCard = null;
     lock = false;
 }
 
+/* FINAL */
 function endGame(win) {
-    let score = time;
-
     if (win) {
-        alert("Parabéns! Você venceu!");
-        saveRanking(player, score);
+        alert("Você venceu!");
+        saveRanking(player, time);
     } else {
         alert("Tempo esgotado!");
     }
@@ -179,6 +224,7 @@ function endGame(win) {
     showRanking();
 }
 
+/* RANKING */
 function saveRanking(name, score) {
     let ranking = JSON.parse(localStorage.getItem("ranking")) || [];
     ranking.push({name, score});
@@ -189,7 +235,7 @@ function saveRanking(name, score) {
 
 function showRanking() {
     document.getElementById("game").style.display = "none";
-    document.getElementById("ranking").style.display = "block";
+    document.getElementById("ranking").style.display = "flex";
 
     let ranking = JSON.parse(localStorage.getItem("ranking")) || [];
     let list = document.getElementById("rankingList");
@@ -202,6 +248,7 @@ function showRanking() {
     });
 }
 
+/* REINICIAR */
 function restart() {
     location.reload();
 }
