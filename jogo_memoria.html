@@ -1,1 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Jogo da Memória</title>
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #1e1e2f;
+    color: white;
+}
 
+h1 { margin-top: 10px; }
+
+#game, #ranking { display: none; }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(5, 80px);
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.card {
+    width: 80px;
+    height: 80px;
+    background: #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 24px;
+    border-radius: 10px;
+}
+
+.card.flipped {
+    background: #fff;
+    color: #000;
+    cursor: default;
+}
+
+button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+</style>
+</head>
+<body>
+
+<h1>🧠 Jogo da Memória</h1>
+
+<div id="login">
+    <p>Digite seu nome ou apelido:</p>
+    <input type="text" id="playerName" placeholder="Seu nome">
+    <br><br>
+    <button onclick="startGame()">Iniciar Jogo</button>
+</div>
+
+<div id="game">
+    <p>Jogador: <span id="playerDisplay"></span></p>
+    <p>Tempo restante: <span id="time">180</span>s</p>
+    <div class="grid" id="grid"></div>
+</div>
+
+<div id="ranking">
+    <h2>🏆 Ranking</h2>
+    <ol id="rankingList"></ol>
+    <button onclick="restart()">Jogar novamente</button>
+</div>
+
+<script>
+let symbols = ["🍎","🍌","🍒","🍇","🍉","🍓","🍍","🥝","🍑","🍋"];
+let cards = [];
+let firstCard = null;
+let secondCard = null;
+let lock = false;
+let matches = 0;
+let time = 180;
+let timer;
+let player = "";
+
+function startGame() {
+    player = document.getElementById("playerName").value;
+    if (!player) {
+        alert("Digite seu nome!");
+        return;
+    }
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("game").style.display = "block";
+    document.getElementById("playerDisplay").innerText = player;
+
+    startTimer();
+    createCards();
+}
+
+function startTimer() {
+    timer = setInterval(() => {
+        time--;
+        document.getElementById("time").innerText = time;
+
+        if (time <= 0) {
+            clearInterval(timer);
+            endGame(false);
+        }
+    }, 1000);
+}
+
+function createCards() {
+    cards = [...symbols, ...symbols];
+    cards.sort(() => 0.5 - Math.random());
+
+    let grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    cards.forEach(symbol => {
+        let card = document.createElement("div");
+        card.classList.add("card");
+        card.dataset.symbol = symbol;
+
+        card.onclick = () => flipCard(card);
+
+        grid.appendChild(card);
+    });
+}
+
+function flipCard(card) {
+    if (lock || card.classList.contains("flipped")) return;
+
+    card.classList.add("flipped");
+    card.innerText = card.dataset.symbol;
+
+    if (!firstCard) {
+        firstCard = card;
+    } else {
+        secondCard = card;
+        lock = true;
+
+        if (firstCard.dataset.symbol === secondCard.dataset.symbol) {
+            matches++;
+            resetTurn();
+
+            if (matches === 10) {
+                clearInterval(timer);
+                endGame(true);
+            }
+        } else {
+            setTimeout(() => {
+                firstCard.classList.remove("flipped");
+                secondCard.classList.remove("flipped");
+                firstCard.innerText = "";
+                secondCard.innerText = "";
+                resetTurn();
+            }, 800);
+        }
+    }
+}
+
+function resetTurn() {
+    firstCard = null;
+    secondCard = null;
+    lock = false;
+}
+
+function endGame(win) {
+    let score = time;
+
+    if (win) {
+        alert("Parabéns! Você venceu!");
+        saveRanking(player, score);
+    } else {
+        alert("Tempo esgotado!");
+    }
+
+    showRanking();
+}
+
+function saveRanking(name, score) {
+    let ranking = JSON.parse(localStorage.getItem("ranking")) || [];
+    ranking.push({name, score});
+    ranking.sort((a,b) => b.score - a.score);
+    ranking = ranking.slice(0, 5);
+    localStorage.setItem("ranking", JSON.stringify(ranking));
+}
+
+function showRanking() {
+    document.getElementById("game").style.display = "none";
+    document.getElementById("ranking").style.display = "block";
+
+    let ranking = JSON.parse(localStorage.getItem("ranking")) || [];
+    let list = document.getElementById("rankingList");
+    list.innerHTML = "";
+
+    ranking.forEach(r => {
+        let li = document.createElement("li");
+        li.innerText = `${r.name} - ${r.score} pontos`;
+        list.appendChild(li);
+    });
+}
+
+function restart() {
+    location.reload();
+}
+</script>
+
+</body>
+</html>
